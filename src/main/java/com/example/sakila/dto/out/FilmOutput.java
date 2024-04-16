@@ -6,6 +6,8 @@ import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.time.Year;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @AllArgsConstructor
@@ -18,6 +20,7 @@ public class FilmOutput {
     private String language;
     private Byte rentalDuration;
     private Short length;
+    private List<ActorReferenceOutput> cast;
 
     public static FilmOutput from(Film film) {
         return new FilmOutput(
@@ -28,7 +31,8 @@ public class FilmOutput {
                 film.getReleaseYear(),
                 film.getLanguage().getName(),
                 film.getRentalDuration(),
-                film.getLength()
+                film.getLength(),
+                film.getCast().stream().map(ActorReferenceOutput::from).collect(Collectors.toList())
         );
     }
 }

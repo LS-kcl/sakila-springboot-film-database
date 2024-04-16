@@ -5,6 +5,8 @@ import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.time.Year;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Entity
@@ -37,4 +39,6 @@ public class Film {
     @Column(name="length")
     private Short length;
 
+    @ManyToMany(mappedBy = "films")
+    private List<Actor> cast = new ArrayList<>();
 }

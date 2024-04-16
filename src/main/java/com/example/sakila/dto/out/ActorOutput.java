@@ -13,7 +13,7 @@ public class ActorOutput {
     private Short id;
     private String firstName;
     private String lastName;
-    private List<FilmOutput> films;
+    private List<FilmReferenceOutput> films;
 
     public static ActorOutput from(Actor actor) {
         return new ActorOutput(
@@ -22,7 +22,7 @@ public class ActorOutput {
                 actor.getLastname(),
                 actor.getFilms()
                         .stream()
-                        .map(FilmOutput::from)
+                        .map(FilmReferenceOutput::from)
                         .collect(Collectors.toList())
         );
     }
