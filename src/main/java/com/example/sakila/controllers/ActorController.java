@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import static com.example.sakila.dto.in.ValidationGroup.Create;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,7 +30,8 @@ public class ActorController{
     }
 
     @PostMapping
-    public ActorOutput create(@Validated @RequestBody ActorInput data){
+    @ResponseStatus(HttpStatus.CREATED)
+    public ActorOutput create(@Validated(Create.class) @RequestBody ActorInput data){
         final var actor = new Actor();
         actor.setFirstname(data.getFirstname());
         actor.setLastname(data.getLastname());
