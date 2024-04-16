@@ -1,6 +1,7 @@
 package com.example.sakila.controllers;
 
 import com.example.sakila.dto.in.ActorInput;
+import com.example.sakila.dto.in.ValidationGroup;
 import com.example.sakila.dto.out.ActorOutput;
 import com.example.sakila.entities.Actor;
 import com.example.sakila.repositories.ActorRepository;
@@ -9,7 +10,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+
 import static com.example.sakila.dto.in.ValidationGroup.Create;
+import static com.example.sakila.dto.in.ValidationGroup.Update;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,6 +51,26 @@ public class ActorController{
 
         // Only if found in repository
         actorRepository.deleteById(id);
+    }
+
+    @PatchMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public ActorOutput update(@Validated(Update.class) @RequestBody ActorInput data, @PathVariable Short id){
+        var actor = actorRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        // If firstname provided
+        if (data.getFirstname()!=null){
+            actor.setFirstname(data.getFirstname());
+        }
+
+        // If lastname provided
+        if (data.getLastname()!=null){
+            actor.setLastname(data.getLastname());
+        }
+
+        var saved = actorRepository.save(actor);
+        return ActorOutput.from(saved);
     }
 
     @GetMapping("/{id}")
