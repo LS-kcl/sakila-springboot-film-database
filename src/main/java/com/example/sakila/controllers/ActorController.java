@@ -39,6 +39,17 @@ public class ActorController{
         return ActorOutput.from(saved);
     }
 
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Short id){
+        // Attempt to delete:
+        actorRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        // Only if found in repository
+        actorRepository.deleteById(id);
+    }
+
     @GetMapping("/{id}")
     public ActorOutput readById(@PathVariable Short id) {
         return actorRepository.findById(id)
