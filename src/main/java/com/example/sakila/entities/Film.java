@@ -3,6 +3,8 @@ package com.example.sakila.entities;
 import jakarta.persistence.*;
 import lombok.Getter;
 
+import java.math.BigDecimal;
+
 @Getter
 @Entity
 @Table(name="film")
@@ -17,4 +19,7 @@ public class Film {
 
     @Column(name="description")
     private String description;
+
+    @Column(name="rental_rate")
+    private BigDecimal rental_rate;
 }
