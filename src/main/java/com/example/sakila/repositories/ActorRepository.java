@@ -1,9 +1,7 @@
 package com.example.sakila.repositories;
 
 import com.example.sakila.entities.Actor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ActorRepository extends CrudRepository<Actor, Short> {
+public interface ActorRepository extends JpaRepository<Actor, Short> {
 }
