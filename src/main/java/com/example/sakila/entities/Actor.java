@@ -3,6 +3,9 @@ package com.example.sakila.entities;
 import jakarta.persistence.*;
 import lombok.Getter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Getter
 @Entity
 @Table(name="actor")
@@ -17,4 +20,12 @@ public class Actor {
 
     @Column(name="last_name")
     private String lastname;
+
+    @ManyToMany
+    @JoinTable(
+            name="film_actor",
+            joinColumns = {@JoinColumn(name="actor_id")},
+            inverseJoinColumns = {@JoinColumn(name="film_id")}
+    )
+    private List<Film> films = new ArrayList<>();
 }

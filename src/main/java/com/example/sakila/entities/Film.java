@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 
 import java.math.BigDecimal;
+import java.time.Year;
 
 @Getter
 @Entity
@@ -20,6 +21,20 @@ public class Film {
     @Column(name="description")
     private String description;
 
+    @Column(name="release_year")
+    private Year releaseYear;
+
     @Column(name="rental_rate")
-    private BigDecimal rental_rate;
+    private BigDecimal rentalRate;
+
+    @ManyToOne
+    @JoinColumn(name="language_id")
+    private Language language;
+
+    @Column(name="rental_duration")
+    private Byte rentalDuration;
+
+    @Column(name="length")
+    private Short length;
+
 }
