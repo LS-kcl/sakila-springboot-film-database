@@ -10,6 +10,9 @@ import com.example.sakila.entities.Film;
 import com.example.sakila.repositories.FilmRepository;
 import com.example.sakila.repositories.LanguageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -46,6 +49,28 @@ public class FilmController {
                         HttpStatus.NOT_FOUND,
                         String.format("No such found film of id %d", id)
                 ));
+    }
+
+    // From: https://www.baeldung.com/rest-api-pagination-in-spring
+    @GetMapping(params = { "page", "size" })
+    public List<FilmOutput> findPaginated(@RequestParam("page") int page,
+                                   @RequestParam("size") int size) {
+        // First create a Pageable from request
+        Pageable firstPageWithTwoElements = PageRequest.of(page, size);
+
+        // Find all films, and then convert to film output:
+        Page<FilmOutput> resultPage = filmRepository.findAll(firstPageWithTwoElements)
+                .map(FilmOutput::from);
+        // Or alternatively if we wanted to include a query:
+        // Page<FilmOutput> resultPage = filmRepository
+        //         .findAllByName("Movie_name", firstPageWithTwoElements)
+        //         .stream()
+        //         .map(FilmOutput::from);
+
+        // List<Product> allTenDollarProducts =
+        //         productRepository.findAllByPrice(10, secondPageWithFiveElements);
+
+        return resultPage.getContent();
     }
 
     @PatchMapping("/{id}")
