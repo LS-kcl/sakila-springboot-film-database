@@ -6,6 +6,7 @@ import com.example.sakila.dto.out.ActorOutput;
 import com.example.sakila.entities.Actor;
 import com.example.sakila.repositories.ActorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +14,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import static com.example.sakila.dto.in.ValidationGroup.Create;
 import static com.example.sakila.dto.in.ValidationGroup.Update;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -74,12 +77,18 @@ public class ActorController{
     }
 
     @GetMapping("/{id}")
-    public ActorOutput readById(@PathVariable Short id) {
-        return actorRepository.findById(id)
+    public EntityModel<ActorOutput> readById(@PathVariable Short id) {
+        // Get the actor output
+        var actorOutput = actorRepository.findById(id)
                 .map(ActorOutput::from)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         String.format("No such found actor of id %d", id)
                 ));
+
+        // Return actor output wrapped in entity model
+        return EntityModel.of(actorOutput, //
+                linkTo(methodOn(ActorController.class).readById(id)).withSelfRel(),
+                linkTo(methodOn(ActorController.class).readAll()).withRel("actors"));
     }
 }
