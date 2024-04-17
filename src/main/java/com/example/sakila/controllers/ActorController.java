@@ -3,10 +3,16 @@ package com.example.sakila.controllers;
 import com.example.sakila.dto.in.ActorInput;
 import com.example.sakila.dto.in.ValidationGroup;
 import com.example.sakila.dto.out.ActorOutput;
+import com.example.sakila.dto.out.FilmOutput;
 import com.example.sakila.entities.Actor;
 import com.example.sakila.repositories.ActorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +23,7 @@ import static com.example.sakila.dto.in.ValidationGroup.Update;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,6 +43,39 @@ public class ActorController{
                         linkTo(methodOn(ActorController.class).readById(actor.getId())).withSelfRel(),
                         linkTo(methodOn(ActorController.class).readAll()).withRel("actors")))
                 .collect(Collectors.toList());
+    }
+
+    @GetMapping(params = { "page", "size" })
+    public CollectionModel<ActorOutput> findPaginated(@RequestParam("page") int page,
+                                          @RequestParam("size") int size) {
+        // First create a Pageable from request
+        Pageable pageable = PageRequest.of(page, size);
+
+        // Find all films, and then convert to film output:
+        Page<ActorOutput> resultPage = actorRepository.findAll(pageable)
+                .map(ActorOutput::from);
+
+        int lastPageIndex = resultPage.getTotalPages()-1;
+
+        // Create pages to link to:
+        var prev_page = page-1 >= 0 ? linkTo(methodOn(ActorController.class).findPaginated(page-1, size)).withRel("prev_page") : null;
+        var next_page = page+1 <= lastPageIndex ? linkTo(methodOn(ActorController.class).findPaginated(page+1, size)).withRel("next_page") : null;
+        var first_page = linkTo(methodOn(ActorController.class).findPaginated(0, size)).withRel("first_page");
+        var last_page = linkTo(methodOn(ActorController.class).findPaginated(lastPageIndex, size)).withRel("last_page");
+        var actors = linkTo(methodOn(ActorController.class).readAll()).withRel("actors");
+
+        List<Link> links = new ArrayList<>(List.of(first_page, last_page, actors));
+
+        if (prev_page != null){
+            links.add(prev_page);
+        }
+        if (next_page != null){
+            links.add(next_page);
+        }
+
+        var content = resultPage.getContent();
+
+        return CollectionModel.of(content, links);
     }
 
     @PostMapping
