@@ -13,13 +13,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import static com.example.sakila.dto.in.ValidationGroup.Create;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,48 +40,70 @@ public class FilmController {
     private LanguageRepository languageRepository;
 
     @GetMapping
-    public List<FilmOutput> readAll() {
+    public List<EntityModel<FilmOutput>> readAll() {
         final var films = filmRepository.findAll();
         return films.stream()
                 .map(FilmOutput::from)
+                .map(film -> EntityModel.of(film,
+                        linkTo(methodOn(FilmController.class).readByID(film.getId())).withSelfRel(),
+                        linkTo(methodOn(FilmController.class).readAll()).withRel("actors")))
                 .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
-    public FilmOutput readByID(@PathVariable Short id) {
-        return filmRepository.findById(id)
+    public EntityModel<FilmOutput> readByID(@PathVariable Short id) {
+        var filmOutput = filmRepository.findById(id)
                 .map(FilmOutput::from)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         String.format("No such found film of id %d", id)
                 ));
+
+        return EntityModel.of(filmOutput, //
+                linkTo(methodOn(FilmController.class).readByID(id)).withSelfRel(),
+                linkTo(methodOn(FilmController.class).readAll()).withRel("films"));
     }
 
     // From: https://www.baeldung.com/rest-api-pagination-in-spring
     @GetMapping(params = { "page", "size" })
-    public List<FilmOutput> findPaginated(@RequestParam("page") int page,
-                                   @RequestParam("size") int size) {
+    public CollectionModel<FilmOutput> findPaginated(@RequestParam("page") int page,
+                                                     @RequestParam("size") int size) {
         // First create a Pageable from request
-        Pageable firstPageWithTwoElements = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size);
 
         // Find all films, and then convert to film output:
-        Page<FilmOutput> resultPage = filmRepository.findAll(firstPageWithTwoElements)
+        Page<FilmOutput> resultPage = filmRepository.findAll(pageable)
                 .map(FilmOutput::from);
-        // Or alternatively if we wanted to include a query:
-        // Page<FilmOutput> resultPage = filmRepository
-        //         .findAllByName("Movie_name", firstPageWithTwoElements)
-        //         .stream()
-        //         .map(FilmOutput::from);
 
-        // List<Product> allTenDollarProducts =
-        //         productRepository.findAllByPrice(10, secondPageWithFiveElements);
+        // Add HATEOAS:
+        int lastPageIndex = resultPage.getTotalPages()-1;
 
-        return resultPage.getContent();
+        // Create pages to link to:
+        var prev_page = page-1 >= 0 ? linkTo(methodOn(FilmController.class).findPaginated(page-1, size)).withRel("prev_page") : null;
+        var next_page = page+1 <= lastPageIndex ? linkTo(methodOn(FilmController.class).findPaginated(page+1, size)).withRel("next_page") : null;
+        var first_page = linkTo(methodOn(FilmController.class).findPaginated(0, size)).withRel("first_page");
+        var last_page = linkTo(methodOn(FilmController.class).findPaginated(lastPageIndex, size)).withRel("last_page");
+        var actors = linkTo(methodOn(FilmController.class).readAll()).withRel("films");
+
+        List<Link> links = new ArrayList<>(List.of(first_page, last_page, actors));
+
+        if (prev_page != null){
+            links.add(prev_page);
+        }
+        if (next_page != null){
+            links.add(next_page);
+        }
+
+        var content = resultPage.getContent();
+
+        return CollectionModel.of(content, links);
     }
 
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public FilmOutput update(@Validated(ValidationGroup.Update.class) @RequestBody FilmInput data, @PathVariable Short id){
+    public EntityModel<FilmOutput> update(
+            @Validated(ValidationGroup.Update.class) @RequestBody FilmInput data,
+            @PathVariable Short id){
         var film = filmRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
@@ -114,7 +142,10 @@ public class FilmController {
         // Later set the film language to that language
 
         var saved = filmRepository.save(film);
-        return FilmOutput.from(saved);
+        var filmOutput = FilmOutput.from(saved);
+        return EntityModel.of(filmOutput, //
+                linkTo(methodOn(FilmController.class).readByID(id)).withSelfRel(),
+                linkTo(methodOn(FilmController.class).readAll()).withRel("films"));
     }
 
     @DeleteMapping("/{id}")
@@ -133,7 +164,7 @@ public class FilmController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public FilmOutput create(@Validated(Create.class) @RequestBody FilmInput data){
+    public EntityModel<FilmOutput> create(@Validated(Create.class) @RequestBody FilmInput data){
         final var film = new Film();
 
         System.out.println(data);
@@ -158,6 +189,11 @@ public class FilmController {
         film.setLength(data.getLength());
 
         var saved = filmRepository.save(film);
-        return FilmOutput.from(saved);
+        var filmOutput = FilmOutput.from(saved);
+        // Get ID of newly created object
+        Short filmId = filmOutput.getId();
+        return EntityModel.of(filmOutput, //
+                linkTo(methodOn(FilmController.class).readByID(filmId)).withSelfRel(),
+                linkTo(methodOn(FilmController.class).readAll()).withRel("films"));
     }
 }
