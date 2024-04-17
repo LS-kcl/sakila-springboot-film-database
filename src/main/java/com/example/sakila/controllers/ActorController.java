@@ -28,10 +28,13 @@ public class ActorController{
     private ActorRepository actorRepository;
 
     @GetMapping
-    public List<ActorOutput> readAll() {
+    public List<EntityModel<ActorOutput>> readAll() {
         final var actors = actorRepository.findAll();
         return actors.stream()
                 .map(ActorOutput::from)
+                .map(actor -> EntityModel.of(actor,
+                        linkTo(methodOn(ActorController.class).readById(actor.getId())).withSelfRel(),
+                        linkTo(methodOn(ActorController.class).readAll()).withRel("actors")))
                 .collect(Collectors.toList());
     }
 
@@ -87,6 +90,7 @@ public class ActorController{
                 ));
 
         // Return actor output wrapped in entity model
+        // Adapted from: https://spring.io/guides/tutorials/rest
         return EntityModel.of(actorOutput, //
                 linkTo(methodOn(ActorController.class).readById(id)).withSelfRel(),
                 linkTo(methodOn(ActorController.class).readAll()).withRel("actors"));
