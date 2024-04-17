@@ -1,5 +1,6 @@
 package com.example.sakila.controllers;
 
+import com.example.sakila.dto.in.ActorInput;
 import com.example.sakila.dto.in.FilmInput;
 import com.example.sakila.dto.in.ValidationGroup;
 import com.example.sakila.dto.out.ActorOutput;
@@ -45,6 +46,64 @@ public class FilmController {
                         HttpStatus.NOT_FOUND,
                         String.format("No such found film of id %d", id)
                 ));
+    }
+
+    @PatchMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public FilmOutput update(@Validated(ValidationGroup.Update.class) @RequestBody FilmInput data, @PathVariable Short id){
+        var film = filmRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        // If a film ID is provided:
+        if (data.getLanguageId() != null) {
+            Short langId = data.getLanguageId();
+            // Check if existing language in repository
+            // Return error if non-existent
+            Language lang = languageRepository.findById(langId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
+
+            // If language is valid, set
+            film.setLanguage(lang);
+        }
+
+
+        if (data.getTitle() != null){
+            film.setTitle(data.getTitle());
+        }
+        if (data.getDescription() != null) {
+            film.setDescription(data.getDescription());
+        }
+        if (data.getReleaseYear() != null) {
+            film.setReleaseYear(data.getReleaseYear());
+        }
+        if (data.getRentalRate() != null) {
+            film.setRentalRate(data.getRentalRate());
+        }
+        if (data.getRentalDuration() != null) {
+            film.setRentalDuration(data.getRentalDuration());
+        }
+        if (data.getLength() != null) {
+            film.setLength(data.getLength());
+        }
+
+        // Later set the film language to that language
+
+        var saved = filmRepository.save(film);
+        return FilmOutput.from(saved);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Short id){
+        // Attempt to delete:
+        var film = filmRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        // Remove foreign key relationship
+        // film.setLanguage(null);
+        // filmRepository.save(film);
+        // Only if found in the repository
+        filmRepository.deleteById(id);
     }
 
     @PostMapping
