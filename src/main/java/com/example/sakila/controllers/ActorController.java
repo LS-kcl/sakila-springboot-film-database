@@ -40,12 +40,17 @@ public class ActorController{
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ActorOutput create(@Validated(Create.class) @RequestBody ActorInput data){
+    public EntityModel<ActorOutput> create(@Validated(Create.class) @RequestBody ActorInput data){
         final var actor = new Actor();
         actor.setFirstname(data.getFirstname());
         actor.setLastname(data.getLastname());
         var saved = actorRepository.save(actor);
-        return ActorOutput.from(saved);
+        var actorOutput = ActorOutput.from(saved);
+        // Get the id of the newly created object to redirect to:
+        Short actorId = actorOutput.getId();
+        return EntityModel.of(actorOutput, //
+                linkTo(methodOn(ActorController.class).readById(actorId)).withSelfRel(),
+                linkTo(methodOn(ActorController.class).readAll()).withRel("actors"));
     }
 
     @DeleteMapping("/{id}")
@@ -61,7 +66,7 @@ public class ActorController{
 
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public ActorOutput update(@Validated(Update.class) @RequestBody ActorInput data, @PathVariable Short id){
+    public EntityModel<ActorOutput> update(@Validated(Update.class) @RequestBody ActorInput data, @PathVariable Short id){
         var actor = actorRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
@@ -76,7 +81,10 @@ public class ActorController{
         }
 
         var saved = actorRepository.save(actor);
-        return ActorOutput.from(saved);
+        var actorOutput = ActorOutput.from(saved);
+        return EntityModel.of(actorOutput, //
+                linkTo(methodOn(ActorController.class).readById(id)).withSelfRel(),
+                linkTo(methodOn(ActorController.class).readAll()).withRel("actors"));
     }
 
     @GetMapping("/{id}")
