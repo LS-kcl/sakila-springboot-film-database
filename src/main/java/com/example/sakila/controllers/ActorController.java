@@ -1,9 +1,7 @@
 package com.example.sakila.controllers;
 
 import com.example.sakila.dto.in.ActorInput;
-import com.example.sakila.dto.in.ValidationGroup;
 import com.example.sakila.dto.out.ActorOutput;
-import com.example.sakila.dto.out.FilmOutput;
 import com.example.sakila.entities.Actor;
 import com.example.sakila.repositories.ActorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,18 +16,18 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static com.example.sakila.dto.in.ValidationGroup.Create;
 import static com.example.sakila.dto.in.ValidationGroup.Update;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 @RestController
 @RequestMapping("/actors")
-public class ActorController{
+public class ActorController {
 
     @Autowired
     private ActorRepository actorRepository;
@@ -45,9 +43,9 @@ public class ActorController{
                 .collect(Collectors.toList());
     }
 
-    @GetMapping(params = { "page", "size" })
+    @GetMapping(params = {"page", "size"})
     public CollectionModel<ActorOutput> findPaginated(@RequestParam("page") int page,
-                                          @RequestParam("size") int size) {
+                                                      @RequestParam("size") int size) {
         // First create a Pageable from request
         Pageable pageable = PageRequest.of(page, size);
 
@@ -55,21 +53,21 @@ public class ActorController{
         Page<ActorOutput> resultPage = actorRepository.findAll(pageable)
                 .map(ActorOutput::from);
 
-        int lastPageIndex = resultPage.getTotalPages()-1;
+        int lastPageIndex = resultPage.getTotalPages() - 1;
 
         // Create pages to link to:
-        var prev_page = page-1 >= 0 ? linkTo(methodOn(ActorController.class).findPaginated(page-1, size)).withRel("prev_page") : null;
-        var next_page = page+1 <= lastPageIndex ? linkTo(methodOn(ActorController.class).findPaginated(page+1, size)).withRel("next_page") : null;
+        var prev_page = page - 1 >= 0 ? linkTo(methodOn(ActorController.class).findPaginated(page - 1, size)).withRel("prev_page") : null;
+        var next_page = page + 1 <= lastPageIndex ? linkTo(methodOn(ActorController.class).findPaginated(page + 1, size)).withRel("next_page") : null;
         var first_page = linkTo(methodOn(ActorController.class).findPaginated(0, size)).withRel("first_page");
         var last_page = linkTo(methodOn(ActorController.class).findPaginated(lastPageIndex, size)).withRel("last_page");
         var actors = linkTo(methodOn(ActorController.class).readAll()).withRel("actors");
 
         List<Link> links = new ArrayList<>(List.of(first_page, last_page, actors));
 
-        if (prev_page != null){
+        if (prev_page != null) {
             links.add(prev_page);
         }
-        if (next_page != null){
+        if (next_page != null) {
             links.add(next_page);
         }
 
@@ -80,7 +78,7 @@ public class ActorController{
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public EntityModel<ActorOutput> create(@Validated(Create.class) @RequestBody ActorInput data){
+    public EntityModel<ActorOutput> create(@Validated(Create.class) @RequestBody ActorInput data) {
         final var actor = new Actor();
         actor.setFirstname(data.getFirstname());
         actor.setLastname(data.getLastname());
@@ -95,7 +93,7 @@ public class ActorController{
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Short id){
+    public void delete(@PathVariable Short id) {
         // Attempt to delete:
         actorRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
@@ -106,17 +104,17 @@ public class ActorController{
 
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public EntityModel<ActorOutput> update(@Validated(Update.class) @RequestBody ActorInput data, @PathVariable Short id){
+    public EntityModel<ActorOutput> update(@Validated(Update.class) @RequestBody ActorInput data, @PathVariable Short id) {
         var actor = actorRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
         // If firstname provided
-        if (data.getFirstname()!=null){
+        if (data.getFirstname() != null) {
             actor.setFirstname(data.getFirstname());
         }
 
         // If lastname provided
-        if (data.getLastname()!=null){
+        if (data.getLastname() != null) {
             actor.setLastname(data.getLastname());
         }
 

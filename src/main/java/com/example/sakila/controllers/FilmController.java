@@ -1,12 +1,10 @@
 package com.example.sakila.controllers;
 
-import com.example.sakila.dto.in.ActorInput;
 import com.example.sakila.dto.in.FilmInput;
 import com.example.sakila.dto.in.ValidationGroup;
-import com.example.sakila.dto.out.ActorOutput;
 import com.example.sakila.dto.out.FilmOutput;
-import com.example.sakila.entities.Language;
 import com.example.sakila.entities.Film;
+import com.example.sakila.entities.Language;
 import com.example.sakila.repositories.FilmRepository;
 import com.example.sakila.repositories.LanguageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,13 +19,13 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import static com.example.sakila.dto.in.ValidationGroup.Create;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.example.sakila.dto.in.ValidationGroup.Create;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @RequestMapping("/films")
@@ -65,7 +63,7 @@ public class FilmController {
     }
 
     // From: https://www.baeldung.com/rest-api-pagination-in-spring
-    @GetMapping(params = { "page", "size" })
+    @GetMapping(params = {"page", "size"})
     public CollectionModel<FilmOutput> findPaginated(@RequestParam("page") int page,
                                                      @RequestParam("size") int size) {
         // First create a Pageable from request
@@ -76,21 +74,21 @@ public class FilmController {
                 .map(FilmOutput::from);
 
         // Add HATEOAS:
-        int lastPageIndex = resultPage.getTotalPages()-1;
+        int lastPageIndex = resultPage.getTotalPages() - 1;
 
         // Create pages to link to:
-        var prev_page = page-1 >= 0 ? linkTo(methodOn(FilmController.class).findPaginated(page-1, size)).withRel("prev_page") : null;
-        var next_page = page+1 <= lastPageIndex ? linkTo(methodOn(FilmController.class).findPaginated(page+1, size)).withRel("next_page") : null;
+        var prev_page = page - 1 >= 0 ? linkTo(methodOn(FilmController.class).findPaginated(page - 1, size)).withRel("prev_page") : null;
+        var next_page = page + 1 <= lastPageIndex ? linkTo(methodOn(FilmController.class).findPaginated(page + 1, size)).withRel("next_page") : null;
         var first_page = linkTo(methodOn(FilmController.class).findPaginated(0, size)).withRel("first_page");
         var last_page = linkTo(methodOn(FilmController.class).findPaginated(lastPageIndex, size)).withRel("last_page");
         var actors = linkTo(methodOn(FilmController.class).readAll()).withRel("films");
 
         List<Link> links = new ArrayList<>(List.of(first_page, last_page, actors));
 
-        if (prev_page != null){
+        if (prev_page != null) {
             links.add(prev_page);
         }
-        if (next_page != null){
+        if (next_page != null) {
             links.add(next_page);
         }
 
@@ -103,7 +101,7 @@ public class FilmController {
     @ResponseStatus(HttpStatus.OK)
     public EntityModel<FilmOutput> update(
             @Validated(ValidationGroup.Update.class) @RequestBody FilmInput data,
-            @PathVariable Short id){
+            @PathVariable Short id) {
         var film = filmRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
@@ -120,7 +118,7 @@ public class FilmController {
         }
 
 
-        if (data.getTitle() != null){
+        if (data.getTitle() != null) {
             film.setTitle(data.getTitle());
         }
         if (data.getDescription() != null) {
@@ -150,7 +148,7 @@ public class FilmController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Short id){
+    public void delete(@PathVariable Short id) {
         // Attempt to delete:
         var film = filmRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
@@ -164,7 +162,7 @@ public class FilmController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public EntityModel<FilmOutput> create(@Validated(Create.class) @RequestBody FilmInput data){
+    public EntityModel<FilmOutput> create(@Validated(Create.class) @RequestBody FilmInput data) {
         final var film = new Film();
 
         System.out.println(data);

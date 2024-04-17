@@ -1,9 +1,6 @@
 package com.example.sakila.dto.in;
 
-import com.example.sakila.entities.Language;
 import jakarta.persistence.Column;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -36,7 +33,7 @@ public class FilmInput {
     private Short languageId;
 
     @NotNull(groups = {Create.class})
-    @Column(name="rental_duration")
+    @Column(name = "rental_duration")
     private Byte rentalDuration;
 
     // Must be of positive length or zero
