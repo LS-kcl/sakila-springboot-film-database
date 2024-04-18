@@ -25,16 +25,14 @@ public class FilmInput {
     private Year releaseYear;
 
     // Rate cannot be below zero
-    @NotNull(groups = {Create.class})
     @DecimalMin("0.00")
-    private BigDecimal rentalRate;
+    private BigDecimal rentalRate = new BigDecimal("4.99");
 
     @NotNull(groups = {Create.class})
     private Short languageId;
 
-    @NotNull(groups = {Create.class})
     @Column(name = "rental_duration")
-    private Byte rentalDuration;
+    private Byte rentalDuration = 3;
 
     // Must be of positive length or zero
     @NotNull(groups = {Create.class})
